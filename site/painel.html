@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<script>/* endereço antigo (workers.dev) → domínio da barbearia, no mesmo caminho */if(location.hostname.endsWith(".workers.dev"))location.replace("https://xn--magrobarbershop-nkb.com.br"+location.pathname+location.search+location.hash)</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel · Magrão Barber Shop</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0c0c0d">
+<link rel="icon" type="image/png" sizes="96x96" href="/img/icone-96.png">
+<link rel="apple-touch-icon" href="/img/icone-180.png">
+<link rel="manifest" href="/painel.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Magrão Painel">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/app.css?v=20261112">
+</head>
+<body>
+<header class="top"><div class="wrap wide">
+  <a class="brand" href="/"><span class="pole"></span>Magrão <b>Painel</b></a>
+  <nav><span class="muted hide-sm" id="who"></span><a href="#" id="logout">Sair</a></nav>
+</div></header>
+
+<main class="wrap wide">
+  <section class="u-maxw-440 u-m-40-auto" id="login" hidden>
+    <h1 class="page-title">Painel da equipe</h1>
+    <p class="muted u-mb-18">Entre com a conta de barbeiro ou administrador.</p>
+    <p class="err" id="no-access" hidden>Sua conta não tem acesso ao painel.</p>
+    <div class="card" id="auth"></div>
+  </section>
+
+  <section id="app" hidden>
+    <div class="push-box u-mb-16" id="push-box" hidden>
+      <p id="push-msg"></p>
+      <div class="row"><button class="btn btn-main btn-sm" id="push-on" hidden>🔔 Receber avisos no celular</button>
+        <button class="btn btn-ghost btn-sm" id="push-off" hidden>Desligar neste aparelho</button></div>
+    </div>
+    <div class="tabs u-mb-24" id="tabs">
+      <button data-t="agenda" aria-selected="true">Agenda</button>
+      <button data-t="equipe" id="tab-equipe">Equipe</button>
+      <button data-t="remanejar">Remanejar</button>
+      <button data-t="caixa" data-admin>Caixa</button>
+      <button data-t="comissoes">Comissões</button>
+      <button data-t="pacotes">Pacotes</button>
+      <button data-t="servicos" data-admin>Serviços e preços</button>
+      <button data-t="barbeiros" data-admin>Barbeiros e horários</button>
+      <button data-t="clientes" data-admin>Clientes</button>
+      <button data-t="mensagens">Mensagens</button>
+      <button data-t="config" data-admin>Configurações</button>
+    </div>
+
+    <!-- AGENDA -->
+    <div data-tab="agenda">
+      <div class="stats u-mb-16" id="ag-counts"></div>
+      <div class="spread u-mb-16">
+        <div class="row">
+          <button class="btn btn-ghost btn-sm" id="prev" aria-label="Dia anterior">←</button>
+          <input class="u-w-auto" type="date" id="date">
+          <button class="btn btn-ghost btn-sm" id="next" aria-label="Próximo dia">→</button>
+          <button class="btn btn-ghost btn-sm" id="today">Hoje</button>
+          <select class="u-w-auto" id="barber-filter"></select>
+          <button class="btn btn-main btn-sm" id="new-booking">+ Agendar cliente</button>
+          <a class="btn btn-ghost btn-sm" id="wa-agenda" target="_blank" rel="noopener noreferrer">Mandar agenda no WhatsApp</a>
+        </div>
+        <div class="muted small" id="day-stats"></div>
+      </div>
+      <div class="agenda-grid">
+        <div class="list" id="agenda"></div>
+        <div class="stack">
+          <div class="card stack">
+            <h3 class="u-fs-1_5r">Bloquear horário / folga</h3>
+            <label>Barbeiro<select id="bl-barber"></select></label>
+            <div class="row u-fwrap-nowrap">
+              <label class="u-flex-1">De<input type="time" id="bl-start" value="12:00"></label>
+              <label class="u-flex-1">Até<input type="time" id="bl-end" value="13:00"></label>
+            </div>
+            <label class="check"><input type="checkbox" id="bl-allday"> Dia inteiro</label>
+            <label>Motivo<input id="bl-reason" maxlength="100" placeholder="Almoço, folga, médico…"></label>
+            <button class="btn btn-ghost" id="bl-add">Bloquear</button>
+            <div class="list" id="blocks"></div>
+          </div>
+          <div class="card stack">
+            <h3 class="u-fs-1_5r">Lista de espera do dia</h3>
+            <div class="list" id="waitlist"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EQUIPE / MEU PAINEL -->
+    <div data-tab="equipe" hidden>
+      <div class="tabs u-mb-18" id="eq-barbers" data-admin-only></div>
+      <div class="spread u-mb-14">
+        <div>
+          <div class="eyebrow" id="eq-role">Barbeiro</div>
+          <h2 class="u-fs-2_2r" id="eq-name"></h2>
+        </div>
+        <div class="row">
+          <button class="btn btn-ghost btn-sm" data-eqp="month">Este mês</button>
+          <button class="btn btn-ghost btn-sm" data-eqp="last">Mês passado</button>
+          <button class="btn btn-ghost btn-sm" data-eqp="week">7 dias</button>
+          <input class="u-w-auto" type="date" id="eq-from" aria-label="De">
+          <input class="u-w-auto" type="date" id="eq-to" aria-label="Até">
+        </div>
+      </div>
+
+      <div class="stats" id="eq-stats"></div>
+
+      <div class="card stack u-mt-22">
+        <div class="spread">
+          <h3 class="u-fs-1_6r">Meus horários do dia</h3>
+          <select class="u-w-auto" id="eqs-day" aria-label="Dia"></select>
+        </div>
+        <p class="small">
+          <span class="slot-chip livre">livre</span> <span class="slot-chip ocupado">ocupado</span>
+          <span class="slot-chip bloqueado">bloqueado</span> <span class="slot-chip passou">já passou</span>
+          <span class="muted" id="eqs-sum"></span>
+        </p>
+        <p class="muted small">Toque nos horários para marcar (pode marcar vários) e use <b>Liberar</b> ou <b>Bloquear</b> na barra de baixo. Ou use os botões do dia todo.</p>
+        <div class="stack" id="eqs-grid"></div>
+      </div>
+
+      <div class="card stack u-mt-22">
+        <h3 class="u-fs-1_6r">Fechar ou liberar vários dias</h3>
+        <p class="muted small">Toque nos dias (pode marcar vários) e escolha. <b>Fechar</b> = folga o dia inteiro. <b>Liberar</b> = volta ao expediente normal, sem bloqueios. Quem já está marcado continua marcado.</p>
+        <div class="day-picks" id="eqd-grid"></div>
+        <div class="slot-bar" id="eqd-bar" hidden>
+          <span class="small"><b id="eqd-count">0</b> dia(s)</span>
+          <button type="button" class="btn btn-main btn-sm" data-eqd="liberar">Liberar dias</button>
+          <button type="button" class="btn btn-bad btn-sm" data-eqd="fechar">Fechar dias</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-eqd="limpar">Limpar</button>
+        </div>
+      </div>
+
+      <div class="agenda-grid u-mt-22">
+        <div class="card stack u-minw-0">
+          <div class="spread">
+            <h3 class="u-fs-1_6r">Clientes</h3>
+            <input class="u-maxw-240" id="eq-q" placeholder="Buscar nome ou telefone" maxlength="60">
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Cliente</th><th>Cortes</th><th>Desmarques</th><th>Faltas</th><th>Reagend.</th><th>Última visita</th><th>Próximo</th></tr></thead>
+              <tbody id="eq-clients"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card stack">
+          <div class="spread u-gap-10">
+            <span id="ag-status"></span>
+            <button class="btn btn-sm" id="ag-toggle"></button>
+          </div>
+          <p class="muted small" id="ag-note"></p>
+          <h3 class="u-fs-1_6r">Agenda aberta</h3>
+          <p class="muted small">Até que dia os clientes podem marcar com este barbeiro pelo site. Os dias depois aparecem como "em breve". Uma data que já passou fecha a agenda para novos agendamentos.</p>
+          <label class="check"><input type="checkbox" id="eq-rolling"> Sempre os próximos <span id="eq-days"></span> dias</label>
+          <label id="eq-until-wrap">Liberar até<input type="date" id="eq-until"></label>
+          <div class="eyebrow u-mt-6">Expediente · vírgula para pausas · vazio = folga</div>
+          <div class="stack u-gap-8" id="eq-hours"></div>
+          <button class="btn btn-main" id="eq-save">Salvar agenda</button>
+        </div>
+      </div>
+
+      <div class="card stack u-mt-22">
+        <h3 class="u-fs-1_6r">Horário de um dia (ou período)</h3>
+        <p class="muted small">Para trabalhar mais tarde no fim de ano, sair mais cedo, folgar ou tirar férias. Vale só nos dias escolhidos, no lugar do expediente da semana. Quem já está marcado continua marcado.</p>
+        <div class="grid2">
+          <label>De<input type="date" id="dh-from"></label>
+          <label>Até (vazio = só um dia)<input type="date" id="dh-to"></label>
+        </div>
+        <label>Horário nesses dias · vírgula para pausas<input id="dh-hours" placeholder="Ex.: 07:00-12:00, 13:00-22:00"></label>
+        <label class="check"><input type="checkbox" id="dh-off"> Folga / férias (não atende nesses dias)</label>
+        <div class="row">
+          <button class="btn btn-main btn-sm" id="dh-save">Salvar horário desses dias</button>
+          <button class="btn btn-ghost btn-sm" id="dh-reset">Voltar ao expediente normal</button>
+        </div>
+        <div class="list" id="dh-list"></div>
+      </div>
+    </div>
+
+    <!-- REMANEJAR -->
+    <div data-tab="remanejar" hidden>
+      <p class="muted u-mb-14">Escolha um dia cheio e mova clientes para dias mais tranquilos. O cliente recebe aviso no WhatsApp e, se não puder no novo horário, pode cancelar pelo site.</p>
+      <div class="row u-mb-12">
+        <select class="u-w-auto" id="rm-barber"></select>
+        <span class="muted small">Ocupação dos próximos 14 dias · clique num dia para ver os clientes</span>
+      </div>
+      <div class="load" id="rm-load"></div>
+      <h3 class="u-fs-1_6r u-m-22-0-10" id="rm-title"></h3>
+      <div class="list" id="rm-list"></div>
+    </div>
+
+    <!-- CAIXA -->
+    <div data-tab="caixa" hidden>
+      <div class="row u-mb-14">
+        <button class="btn btn-ghost btn-sm" data-cx="today">Hoje</button>
+        <button class="btn btn-ghost btn-sm" data-cx="yesterday">Ontem</button>
+        <button class="btn btn-ghost btn-sm" data-cx="week">7 dias</button>
+        <button class="btn btn-ghost btn-sm" data-cx="month">Este mês</button>
+        <label class="u-fd-row u-ai-center u-gap-8">De <input class="u-w-auto" type="date" id="cx-from"></label>
+        <label class="u-fd-row u-ai-center u-gap-8">Até <input class="u-w-auto" type="date" id="cx-to"></label>
+        <select class="u-w-auto" id="cx-barber"></select>
+      </div>
+      <div class="stats" id="cx-stats"></div>
+      <p class="err small u-mt-12" id="cx-warn" hidden></p>
+      <h3 class="u-fs-1_6r u-m-24-0-10">Entradas</h3>
+      <div class="card table-wrap">
+        <table>
+          <thead><tr><th>Quando</th><th>Cliente</th><th>O quê</th><th>Forma</th><th>Valor</th></tr></thead>
+          <tbody id="cx-body"></tbody>
+        </table>
+      </div>
+      <h3 class="u-fs-1_6r u-m-24-0-10">Pendentes · a receber</h3>
+      <div class="card table-wrap">
+        <table>
+          <thead><tr><th>Corte</th><th>Cliente (quem paga)</th><th>O quê</th><th>Valor</th><th></th></tr></thead>
+          <tbody id="cx-pend"></tbody>
+        </table>
+      </div>
+      <p class="muted small u-mt-12">Entra no caixa o atendimento que foi <b>concluído</b> na agenda (a forma de pagamento é escolhida ao concluir) e a venda de pacote.
+        Corte feito com pacote não entra de novo: o dinheiro já entrou quando o pacote foi vendido.
+        Consumo (bebidas etc.) entra junto e vai todo para a casa. <b>Pendente</b> só entra no caixa no dia em que for recebido.</p>
+    </div>
+
+    <!-- COMISSÕES -->
+    <div data-tab="comissoes" hidden>
+      <div class="card stack u-maxw-380" id="cm-gate" hidden>
+        <h3 class="u-fs-1_6r">Área protegida</h3>
+        <label>Senha das comissões<input type="password" id="cm-pass" maxlength="72" autocomplete="new-password"></label>
+        <p class="err" id="cm-err" role="alert"></p>
+        <div><button class="btn btn-main" id="cm-open">Abrir comissões</button></div>
+      </div>
+      <div id="cm-content" hidden>
+      <div class="row u-mb-14">
+        <label class="u-fd-row u-ai-center u-gap-8">De <input class="u-w-auto" type="date" id="cm-from"></label>
+        <label class="u-fd-row u-ai-center u-gap-8">Até <input class="u-w-auto" type="date" id="cm-to"></label>
+        <button class="btn btn-ghost btn-sm" data-period="month">Este mês</button>
+        <button class="btn btn-ghost btn-sm" data-period="last">Mês passado</button>
+        <button class="btn btn-ghost btn-sm" data-period="week">Últimos 7 dias</button>
+        <button class="btn btn-ghost btn-sm" id="cm-lock" data-admin>Bloquear</button>
+      </div>
+      <div class="card table-wrap">
+        <table>
+          <thead><tr><th>Barbeiro</th><th>Atendimentos</th><th>Total cobrado</th><th>Comissão do barbeiro</th><th data-admin></th></tr></thead>
+          <tbody id="cm-body"></tbody>
+          <tfoot id="cm-foot"></tfoot>
+        </table>
+      </div>
+      <div data-admin>
+        <h3 class="u-fs-1_6r u-m-24-0-10">Por forma de pagamento</h3>
+        <div class="card table-wrap">
+          <table>
+            <thead><tr><th>O quê</th><th>Forma</th><th>Quantidade</th><th>Total</th></tr></thead>
+            <tbody id="ps-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <p class="muted small u-mt-12">Corte feito com pacote entra na comissão pelo valor de cada corte do pacote (ex.: 3 por R$ 180 = R$ 60 cada).</p>
+      <p class="muted small u-mt-12">Conta só atendimentos <b>concluídos</b>. Nas químicas ("a partir de"), vale o valor final digitado ao concluir.</p>
+      <p class="muted small u-mt-12" data-admin>Em <b>Editar</b> você muda a porcentagem (vale para os próximos atendimentos) ou combina um valor em reais para o período aberto na tela. Fica bloqueado de novo ao sair da aba ou depois de 5 minutos parado.</p>
+      </div>
+    </div>
+
+    <!-- PACOTES -->
+    <div data-tab="pacotes" hidden>
+      <div class="card stack u-mb-18">
+        <h3 class="u-fs-1_6r">Vender pacote no balcão</h3>
+        <label>Cliente (nome ou telefone)<input id="ps-q" maxlength="60" autocomplete="off" placeholder="Ex.: João ou 99999"></label>
+        <div class="list" id="ps-results"></div>
+        <div class="stack" id="ps-form" hidden>
+          <p class="small"><b id="ps-client"></b> · <a href="#" id="ps-change">trocar cliente</a></p>
+          <div class="grid2">
+            <label>Pacote ou plano<select id="ps-pkg"></select></label>
+            <label>Como pagou<select id="ps-method"><option value="pix">Pix</option><option value="credito">Cartão de crédito</option><option value="debito">Cartão de débito</option><option value="dinheiro">Dinheiro</option></select></label>
+          </div>
+          <div><button class="btn btn-main btn-sm" id="ps-sell">Vender e ativar</button></div>
+        </div>
+      </div>
+      <div class="spread u-mb-10"><h3 class="u-fs-1_6r">Pacotes dos clientes</h3>
+        <input class="u-maxw-260" id="pk-q" placeholder="Buscar cliente" maxlength="60"></div>
+      <div class="list" id="pk-list"></div>
+      <div data-admin>
+        <h3 class="u-fs-1_6r u-m-28-0-10">Pacotes e planos à venda</h3>
+        <div class="card table-wrap">
+          <table>
+            <thead><tr><th>Ordem</th><th>Tipo</th><th>Nome</th><th>Serviço</th><th>Cortes</th><th>Preço (R$)</th><th>Validade (dias)</th><th>Link da assinatura (opcional)</th><th>Ativo</th><th></th></tr></thead>
+            <tbody id="pkc-body"></tbody>
+          </table>
+          <button class="btn btn-ghost btn-sm u-mt-14" id="pkc-add">+ Novo pacote</button>
+        </div>
+        <p class="muted small u-mt-12"><b>Pacote</b>: o cliente paga uma vez (crédito em até 12x ou Pix pelo site, ou no balcão) e usa os cortes dentro da validade.
+          <b>Plano</b>: mensal, os cortes valem 30 dias. Para cobrar sozinho no cartão todo mês, crie o plano no app da InfinitePay
+          (Planos e assinaturas) e cole o link aqui; quando o pagamento aparecer no app, clique em "Ativar" ou "Renovar mês".</p>
+      </div>
+    </div>
+
+    <!-- SERVIÇOS -->
+    <div data-tab="servicos" hidden>
+      <div class="card table-wrap">
+        <table>
+          <thead><tr><th>Ordem</th><th>Serviço</th><th>Descrição</th><th>Preço (R$)</th><th>"A partir de"</th><th>Duração (min)</th><th>Ativo</th><th></th></tr></thead>
+          <tbody id="svc-body"></tbody>
+        </table>
+        <button class="btn btn-ghost btn-sm u-mt-14" id="svc-add">+ Novo serviço</button>
+      </div>
+      <h3 class="u-fs-1_6r u-m-28-0-10">Comissão por serviço</h3>
+      <div class="card stack u-maxw-380" id="sc-gate">
+        <p class="muted small">Área protegida: é a mesma senha da aba Comissões.</p>
+        <label>Senha das comissões<input type="password" id="sc-pass" maxlength="72" autocomplete="new-password"></label>
+        <p class="err" id="sc-err" role="alert"></p>
+        <div><button class="btn btn-main" id="sc-open">Abrir comissão dos serviços</button></div>
+      </div>
+      <div id="sc-content" hidden>
+        <div class="tabs u-mb-14" id="sc-barbers"></div>
+        <p class="muted small u-mb-10" id="sc-help"></p>
+        <div class="card row u-mb-14">
+          <label class="u-fd-row u-ai-center u-gap-8">Barbeiro recebe <input class="u-w-80" type="number" id="sc-all" min="0" max="100" step="1" placeholder="%"> %</label>
+          <button class="btn btn-ghost btn-sm" id="sc-all-btn">Aplicar em todos os serviços deste barbeiro</button>
+          <button class="btn btn-ghost btn-sm" id="sc-clear-btn">Voltar todos para a % geral dele</button>
+        </div>
+        <div class="card table-wrap">
+          <table>
+            <thead><tr><th>Serviço</th><th>Preço</th><th>Barbeiro (%)</th><th>Casa (%)</th><th>Em reais</th><th></th></tr></thead>
+            <tbody id="sc-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <h3 class="u-fs-1_6r u-m-28-0-10">Consumíveis (bebidas e outros)</h3>
+      <div class="card table-wrap">
+        <table>
+          <thead><tr><th>Ordem</th><th>Nome</th><th>Preço (R$)</th><th>Ativo</th><th></th></tr></thead>
+          <tbody id="prod-body"></tbody>
+        </table>
+        <button class="btn btn-ghost btn-sm u-mt-14" id="prod-add">+ Novo consumível</button>
+      </div>
+      <p class="muted small u-mt-12">Ao concluir um atendimento, o barbeiro marca o que o cliente consumiu e o painel soma ao valor do corte. O consumo vai todo para a casa (não entra na comissão).</p>
+      <h3 class="u-fs-1_6r u-m-28-0-10">Promoções da página inicial</h3>
+      <p class="muted small u-mb-10">Escolha um serviço do cardápio (ou deixe livre) e coloque o preço que quiser. No site, a promoção aparece com <span class="badge confirmado">Disponível</span> em verde ou <span class="badge cancelado">Indisponível</span> em vermelho; desmarque "Mostrar no site" para escondê-la. Preço vazio = sem preço. "De" é o preço riscado (opcional).</p>
+      <div class="stack" id="promo-list"></div>
+      <button class="btn btn-ghost btn-sm u-mt-14" id="promo-add">+ Nova promoção</button>
+    </div>
+
+    <!-- BARBEIROS -->
+    <div data-tab="barbeiros" hidden>
+      <div class="card stack u-mb-18">
+        <div class="spread">
+          <h3 class="u-fs-1_6r">Horários do dia</h3>
+          <div class="row">
+            <select class="u-w-auto" id="ds-day" aria-label="Dia"></select>
+            <select class="u-w-auto" id="ds-barber" aria-label="Barbeiro"></select>
+          </div>
+        </div>
+        <p class="small">
+          <span class="slot-chip livre">livre</span> <span class="slot-chip ocupado">ocupado</span>
+          <span class="slot-chip bloqueado">bloqueado</span> <span class="slot-chip passou">já passou</span>
+          <span class="muted" id="ds-sum"></span>
+        </p>
+        <p class="muted small">Toque nos horários para marcar (pode marcar vários) e use <b>Liberar</b> ou <b>Bloquear</b> na barra de baixo. Ou use os botões do dia todo.</p>
+        <div class="stack" id="ds-grid"></div>
+      </div>
+      <div class="list" id="barbers"></div>
+      <button class="btn btn-ghost btn-sm u-mt-14" id="barber-add">+ Novo barbeiro</button>
+      <p class="muted small u-mt-14">Para um barbeiro ver a própria agenda: ele cria uma conta no site e você, em "Clientes", muda o acesso dele para "Barbeiro".</p>
+    </div>
+
+    <!-- CLIENTES -->
+    <div data-tab="clientes" hidden>
+      <div class="card stack u-mb-18">
+        <div class="spread"><h3 class="u-fs-1_6r">🎂 Aniversariantes</h3>
+          <select class="u-w-auto" id="bd-month"></select></div>
+        <div class="list" id="bd-list"></div>
+      </div>
+      <input class="u-maxw-360 u-mb-14" id="cli-q" placeholder="Buscar por nome ou WhatsApp" maxlength="60">
+      <div class="card table-wrap">
+        <table>
+          <thead><tr><th>Nome</th><th>WhatsApp</th><th>Cortes</th><th>Faltas</th><th>Pacote</th><th>Acesso</th><th></th></tr></thead>
+          <tbody id="cli-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- MENSAGENS -->
+    <div data-tab="mensagens" hidden>
+      <p class="muted small u-mb-12" id="wa-mode"></p>
+      <div class="u-maxw-320 u-mb-12"><label class="small">WhatsApp deste celular<select data-wa-app>
+        <option value="auto">Automático (link do WhatsApp)</option>
+        <option value="business">WhatsApp Business</option>
+        <option value="normal">WhatsApp normal</option></select></label></div>
+      <div class="list" id="msgs"></div>
+    </div>
+
+    <!-- CONFIG -->
+    <div data-tab="config" hidden>
+      <div class="card stack u-maxw-560">
+        <label>Sinal cobrado no Pix
+          <select id="cfg-deposit_percent"><option value="0">Sem sinal: confirma na hora e paga na barbearia</option><option value="30">30% do valor</option><option value="50">50% do valor</option><option value="100">100% (pagamento total)</option></select></label>
+        <label>Lembrete automático no WhatsApp (minutos antes)<input type="number" min="5" id="cfg-reminder_minutes"></label>
+        <label>Tempo para pagar o Pix antes de liberar o horário (minutos)<input type="number" min="5" id="cfg-hold_minutes"></label>
+        <label>Devolver o sinal se cancelar com pelo menos (horas)<input type="number" min="0" id="cfg-cancel_hours"></label>
+        <label>Tempo de cada horário (contado a partir do início do expediente)
+          <select id="cfg-slot_step_min">
+            <option value="10">A cada 10 min (07:00, 07:10, 07:20…)</option>
+            <option value="15">A cada 15 min (07:00, 07:15, 07:30…)</option>
+            <option value="20">A cada 20 min (07:00, 07:20, 07:40…)</option>
+            <option value="30">A cada 30 min (07:00, 07:30, 08:00…)</option>
+            <option value="40">A cada 40 min (07:00, 07:40, 08:20…)</option>
+            <option value="60">A cada 1 hora (07:00, 08:00, 09:00…)</option>
+          </select>
+          <small class="muted">Os horários de cada barbeiro começam no início do expediente dele. Se um serviço durar mais que isso, ele ocupa mais de um horário.</small></label>
+        <label>Antecedência mínima para agendar (minutos)<input type="number" min="0" id="cfg-min_lead_min"></label>
+        <label>Agenda aberta para quantos dias à frente<input type="number" min="1" id="cfg-days_ahead"></label>
+        <label>Quantas pessoas da lista de espera avisar quando abre vaga<input type="number" min="1" id="cfg-waitlist_notify_count"></label>
+        <label>Pagamento online pelo site (InfinitePay: crédito em até 12x ou Pix)
+          <select id="cfg-online_pay"><option value="0">Desligado: o cliente paga na barbearia</option><option value="1">Ligado: o cliente escolhe pagar agora ou na barbearia</option></select>
+          <small class="muted">Só ligue depois de colocar a InfiniteTag da barbearia nos segredos do Supabase (INFINITEPAY_HANDLE).</small></label>
+        <hr class="u-b0 u-bt-line">
+        <label>Confirmação de presença
+          <select id="cfg-confirm_required"><option value="0">Desligada</option><option value="1">Ligada: sem confirmação, a vaga é liberada</option></select></label>
+        <label>Pedir a confirmação quantos minutos antes (180 = 3 horas)<input type="number" min="30" id="cfg-confirm_ask_minutes"></label>
+        <label>Liberar a vaga se não confirmar até quantos minutos antes<input type="number" min="5" id="cfg-confirm_deadline_minutes"></label>
+        <hr class="u-b0 u-bt-line">
+        <label>Mensagem de aniversário
+          <select id="cfg-birthday_enabled"><option value="1">Ligada: manda parabéns às 9h do dia</option><option value="0">Desligada</option></select></label>
+        <label>Presente de aniversário (aparece na mensagem)<input id="cfg-birthday_gift" maxlength="200"></label>
+        <p class="muted small">Só ligue quando o WhatsApp oficial estiver enviando mensagens. Sem ele o cliente não recebe o pedido e só consegue confirmar em "Minha conta". Agendamentos feitos pelo balcão e quem marcou já dentro do prazo ficam fora da regra.</p>
+        <button class="btn btn-main" id="cfg-save">Salvar</button>
+        <p class="muted small" id="cfg-modes"></p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Janela de mover horário -->
+<dialog id="move">
+  <form method="dialog" class="stack" id="move-form">
+    <div class="spread"><h3 class="u-fs-1_8r">Mover horário</h3><button class="btn btn-ghost btn-sm" value="cancel" aria-label="Fechar">✕</button></div>
+    <p class="muted small" id="mv-info"></p>
+    <label>Barbeiro<select id="mv-barber"></select></label>
+    <div class="days" id="mv-days"></div>
+    <div class="times" id="mv-times"></div>
+    <label class="check small"><input type="checkbox" id="mv-force"> Encaixe fora do expediente (escolher hora livre)</label>
+    <label id="mv-free-wrap" hidden>Hora do encaixe<input type="time" id="mv-free"></label>
+    <label class="check small"><input type="checkbox" id="mv-notify" checked> Avisar o cliente no WhatsApp</label>
+    <p class="err" id="mv-err" role="alert"></p>
+    <button class="btn btn-main" id="mv-save" type="button" disabled>Mover</button>
+  </form>
+</dialog>
+
+<!-- Janela de agendar cliente pelo balcão -->
+<dialog id="nb">
+  <form method="dialog" class="stack" id="nb-form">
+    <div class="spread"><h3 class="u-fs-1_8r">Agendar cliente</h3><button class="btn btn-ghost btn-sm" value="cancel" aria-label="Fechar">✕</button></div>
+    <div class="tabs" id="nb-mode" role="tablist">
+      <button type="button" data-mode="marcar" aria-selected="true">Marcar horário</button>
+      <button type="button" data-mode="encaixe" aria-selected="false">Encaixe (já atendido)</button>
+    </div>
+
+    <!-- Encaixe: corte feito agora (ou que passou do horário), entra direto como concluído -->
+    <div id="wk" class="stack" hidden>
+      <p class="muted small">Para o cliente que chegou sem horário ou passou do horário e você atendeu mesmo assim. Fica registrado como concluído e entra em Comissões, Caixa e no resumo do dia.</p>
+      <div class="stack" id="wk-client-pick">
+        <label>Cliente com cadastro? Busque (nome ou telefone)<input id="wk-q" maxlength="60" autocomplete="off" placeholder="Ex.: João ou 99999"></label>
+        <div class="list" id="wk-results"></div>
+        <div class="grid2">
+          <label>Ou: nome do cliente<input id="wk-name" maxlength="80" autocomplete="off" placeholder="Ex.: Zé"></label>
+          <label>Telefone (opcional · cadastra)<input id="wk-phone" type="tel" maxlength="20" autocomplete="off" placeholder="(19) 99999-9999"></label>
+        </div>
+      </div>
+      <p class="small" id="wk-client-chosen" hidden><b id="wk-client"></b> · <a href="#" id="wk-change">trocar cliente</a></p>
+      <div class="stack u-gap-6">
+        <span class="small">Serviços que fez <span class="muted">· pode marcar mais de um</span></span>
+        <div class="svc-picks" id="wk-services"></div>
+        <span class="muted small" id="wk-sum"></span>
+      </div>
+      <div class="grid2">
+        <label>Com quem cortou<select id="wk-barber"></select></label>
+        <label>Dia<input type="date" id="wk-date"></label>
+        <label>Que horas chegou<input type="time" id="wk-time"></label>
+        <label>Valor cobrado (R$)<input type="number" id="wk-price" step="0.01" min="0" inputmode="decimal"></label>
+        <label>Como pagou<select id="wk-pay">
+          <option value="pix">Pix</option><option value="credito">Cartão de crédito</option><option value="debito">Cartão de débito</option>
+          <option value="dinheiro">Dinheiro</option><option value="pendente">Pendente · paga depois (só com cadastro)</option></select></label>
+      </div>
+      <button class="btn btn-main" id="wk-save" type="button">Registrar atendimento</button>
+    </div>
+
+    <div id="nb-step-client" class="stack">
+      <label>Buscar cliente (nome ou telefone)<input id="nb-q" maxlength="60" autocomplete="off" placeholder="Ex.: João ou 99999"></label>
+      <div class="list" id="nb-results"></div>
+      <details id="nb-new">
+        <summary class="u-cur-pointer u-fw-600">Cliente novo (só nome e telefone)</summary>
+        <div class="stack u-mt-10">
+          <label>Nome<input id="nb-name" maxlength="80" autocomplete="off"></label>
+          <label>Telefone / WhatsApp<input id="nb-phone" type="tel" maxlength="20" autocomplete="off" placeholder="(19) 99999-9999"></label>
+          <label>Data de nascimento (opcional)<input id="nb-birth" type="date" min="1900-01-01"></label>
+          <button type="button" class="btn btn-ghost btn-sm" id="nb-create">Cadastrar cliente</button>
+        </div>
+      </details>
+    </div>
+    <div id="nb-step-slot" class="stack" hidden>
+      <p class="small"><b id="nb-client"></b> · <a href="#" id="nb-change">trocar cliente</a></p>
+      <label>Corte do filho? Nome do filho (opcional · fica na conta do pai)<input id="nb-child" list="nb-kids" maxlength="60" autocomplete="off" placeholder="Deixe vazio se for o próprio cliente"></label>
+      <datalist id="nb-kids"></datalist>
+      <div class="grid2">
+        <label>Serviço<select id="nb-service"></select></label>
+        <label>Barbeiro<select id="nb-barber"></select></label>
+      </div>
+      <label>Dia<input type="date" id="nb-date"></label>
+      <div class="times" id="nb-times"></div>
+      <label class="check small"><input type="checkbox" id="nb-force"> Encaixe fora do expediente</label>
+      <label id="nb-free-wrap" hidden>Hora do encaixe<input type="time" id="nb-free"></label>
+      <label class="check small"><input type="checkbox" id="nb-use-pkg"> Usar um corte do pacote do cliente</label>
+      <p class="muted small">O cliente paga na barbearia (ou com o pacote). Se ele tiver WhatsApp, recebe a confirmação.</p>
+    </div>
+    <p class="err" id="nb-err" role="alert"></p>
+    <button class="btn btn-main" id="nb-save" type="button" disabled hidden>Agendar</button>
+  </form>
+</dialog>
+
+<!-- Janela: como o cliente pagou -->
+<!-- Notas: bloco de notas flutuante, salvo na conta de cada um -->
+<div id="notes" hidden>
+  <div class="notes-panel" id="notes-panel" hidden>
+    <div class="spread"><b>Minhas notas</b><button type="button" class="btn btn-ghost btn-sm" id="notes-close" aria-label="Fechar notas">✕</button></div>
+    <textarea id="notes-text" maxlength="20000" placeholder="Anote o que não pode esquecer: pedidos, recados, compras…"></textarea>
+    <span class="muted small" id="notes-status"></span>
+  </div>
+  <button type="button" class="notes-btn" id="notes-btn" aria-label="Abrir notas">📝 Notas</button>
+</div>
+
+<dialog id="wadlg">
+  <form method="dialog" class="stack">
+    <div class="spread"><h3 class="u-fs-1_8r">Avisar o cliente</h3><button class="btn btn-ghost btn-sm" value="" aria-label="Fechar">✕</button></div>
+    <p class="small" id="wa-title"></p>
+    <p class="card small u-ws-pre-wrap" id="wa-text"></p>
+    <a class="btn btn-main btn-block" id="wa-send" target="_blank" rel="noopener noreferrer">Enviar no WhatsApp</a>
+    <label class="small">WhatsApp deste celular<select data-wa-app>
+      <option value="auto">Automático (link do WhatsApp)</option>
+      <option value="business">WhatsApp Business</option>
+      <option value="normal">WhatsApp normal</option></select></label>
+    <button class="btn btn-ghost btn-block" value="">Avisar depois (fica na aba Mensagens)</button>
+  </form>
+</dialog>
+
+<dialog id="askdlg">
+  <form method="dialog" class="stack">
+    <p id="ask-text"></p>
+    <div class="row"><button class="btn btn-main" value="ok" id="ask-ok">Confirmar</button><button class="btn btn-ghost" value="">Voltar</button></div>
+  </form>
+</dialog>
+
+<dialog id="cmdlg">
+  <div class="stack">
+    <div class="spread"><h3 class="u-fs-1_8r" id="cmd-title"></h3><button class="btn btn-ghost btn-sm" type="button" id="cmd-close" aria-label="Fechar">✕</button></div>
+    <p class="muted small" id="cmd-info"></p>
+    <label>Barbeiro recebe neste período (R$)<input type="number" id="cmd-val" step="0.01" min="0" inputmode="decimal"></label>
+    <p class="small" id="cmd-house"></p>
+    <label>Porcentagem do barbeiro nos próximos atendimentos (%)<input type="number" id="cmd-pct" min="0" max="100" inputmode="numeric"></label>
+    <p class="err small" id="cmd-err" role="alert"></p>
+    <div class="row">
+      <button class="btn btn-main" type="button" id="cmd-save">Salvar</button>
+      <button class="btn btn-ghost" type="button" id="cmd-reset" hidden>Voltar para a porcentagem</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="rmdlg">
+  <form method="dialog" class="stack">
+    <div class="spread"><h3 class="u-fs-1_8r" id="rm-title">Desmarcar</h3><button class="btn btn-ghost btn-sm" value="" aria-label="Fechar">✕</button></div>
+    <p class="small"><b id="rm-info"></b></p>
+    <p class="muted small" id="rm-help"></p>
+    <p class="err small" id="rm-online" hidden>Esse horário foi pago online: a devolução é feita pelo app da InfinitePay.</p>
+    <label id="rm-reason-label">Motivo<input id="rm-reason" maxlength="200" autocomplete="off"></label>
+    <label class="check" id="rm-notify-wrap"><input type="checkbox" id="rm-notify" checked> Mandar mensagem no WhatsApp para o cliente remarcar</label>
+    <label class="check" id="rm-refund-wrap" hidden><input type="checkbox" id="rm-refund" checked> Devolver o sinal para o cliente</label>
+    <div class="row">
+      <button class="btn btn-bad" value="ok" id="rm-go">Desmarcar</button>
+      <button class="btn btn-ghost" value="">Voltar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="paydlg">
+  <form method="dialog" class="stack">
+    <div class="spread"><h3 class="u-fs-1_8r">Confirmar pagamento</h3><button class="btn btn-ghost btn-sm" value="" aria-label="Fechar">✕</button></div>
+    <p class="muted small" id="pay-info"></p>
+    <label id="pay-price-wrap" hidden>Valor final do serviço (R$)<input type="number" id="pay-price" step="0.01" min="0" inputmode="decimal"></label>
+    <div class="stack u-gap-8" id="pay-items" hidden></div>
+    <p id="pay-total" hidden></p>
+    <div class="grid2">
+      <button class="btn btn-main" value="pix">Pix</button><button class="btn btn-main" value="credito">Crédito</button>
+      <button class="btn btn-main" value="debito">Débito</button><button class="btn btn-main" value="dinheiro">Dinheiro</button>
+    </div>
+    <button class="btn btn-ghost btn-block" value="nada" id="pay-none" hidden>Concluir sem consumo</button>
+    <button class="btn btn-bad btn-block" value="pendente" id="pay-pend" hidden>Pendente · paga depois (fica na conta do cliente)</button>
+  </form>
+</dialog>
+
+<script src="js/config.js?v=20261106"></script>
+<script src="js/api.js?v=20261114"></script>
+<script src="js/painel.js?v=20261112b"></script>
+</body>
+</html>

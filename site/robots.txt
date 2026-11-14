@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /painel
+Disallow: /conta
+Disallow: /confirmar
+
+Sitemap: https://xn--magrobarbershop-nkb.com.br/sitemap.xml

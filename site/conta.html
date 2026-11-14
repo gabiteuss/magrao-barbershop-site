@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<script>/* endereço antigo (workers.dev) → domínio da barbearia, no mesmo caminho */if(location.hostname.endsWith(".workers.dev"))location.replace("https://xn--magrobarbershop-nkb.com.br"+location.pathname+location.search+location.hash)</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minha conta · Magrão Barber Shop</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0c0c0d">
+<link rel="icon" type="image/png" sizes="96x96" href="/img/icone-96.png">
+<link rel="apple-touch-icon" href="/img/icone-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/app.css?v=20261105">
+</head>
+<body>
+<div id="topo"></div>
+<main class="wrap">
+  <section id="guest" hidden>
+    <div class="eyebrow">Cliente</div>
+    <h1 class="page-title">Minha conta</h1>
+    <p class="muted u-mb-22">Entre para ver, pagar e cancelar seus horários.</p>
+    <div class="card" id="auth"></div>
+  </section>
+
+  <section id="recovery" hidden>
+    <h1 class="page-title">Criar nova senha</h1>
+    <form class="card stack u-mt-18" id="recovery-form">
+      <label>Nova senha<input type="password" name="password" autocomplete="new-password" minlength="8" maxlength="72" placeholder="Mínimo 8 caracteres"></label>
+      <p class="err" role="alert"></p>
+      <button class="btn btn-main" type="submit">Salvar nova senha</button>
+    </form>
+  </section>
+
+  <section id="logged" hidden>
+    <div class="spread">
+      <div>
+        <div class="eyebrow">Olá</div>
+        <h1 class="page-title" id="hello"></h1>
+      </div>
+      <div class="row">
+        <a class="btn btn-ghost btn-sm" id="staff-link" href="/painel.html" hidden>Painel da equipe</a>
+        <button class="btn btn-ghost btn-sm" id="logout">Sair</button>
+      </div>
+    </div>
+    <p class="muted small" id="me-info"></p>
+    <p class="card small err u-mt-12" id="debt" hidden></p>
+    <p class="card small u-mt-12" id="birth-ask" hidden>🎁 Coloque sua data de nascimento em <b>Meus dados</b> (lá embaixo) e ganhe um presente no seu aniversário.</p>
+
+    <div class="spread u-m-28-0-12">
+      <h2 class="u-fs-2r">Próximos horários</h2>
+      <a class="btn btn-main btn-sm" href="/agendar.html">Novo agendamento</a>
+    </div>
+    <div class="list" id="next"></div>
+
+    <div>
+      <h2 class="u-fs-2r u-m-32-0-6">Meus filhos</h2>
+      <p class="muted small u-mb-12">Cadastre seus filhos para marcar o corte deles junto com o seu. Ao agendar, marque "Meu filho também vai cortar" e a gente sugere o horário mais perto do seu.</p>
+      <div class="list" id="kids"></div>
+      <form class="row u-mt-12" id="kid-form">
+        <input class="u-flex-1 u-minw-160" name="name" maxlength="60" placeholder="Nome do filho">
+        <button class="btn btn-ghost btn-sm" type="submit">Adicionar filho</button>
+      </form>
+    </div>
+
+    <div id="pacotes">
+      <h2 class="u-fs-2r u-m-32-0-6">Pacotes e planos</h2>
+      <p class="muted small u-mb-12">Pague uma vez e use os cortes quando quiser. Ao agendar, escolha "Usar meu pacote".</p>
+      <div class="list" id="my-pkgs"></div>
+      <div class="list u-mt-12" id="buy-pkgs"></div>
+    </div>
+
+    <div id="wait-wrap" hidden>
+      <h2 class="u-fs-2r u-m-32-0-12">Lista de espera</h2>
+      <div class="list" id="wait"></div>
+    </div>
+
+    <h2 class="u-fs-2r u-m-32-0-12">Histórico</h2>
+    <div class="list" id="past"></div>
+
+    <details class="card u-mt-32">
+      <summary class="u-cur-pointer u-fw-600">Meus dados e segurança</summary>
+      <div class="stack u-mt-16">
+        <form class="stack" id="profile-form">
+          <div class="grid2">
+            <label>Nome<input name="name" maxlength="80" autocomplete="name"></label>
+            <label>WhatsApp<input name="phone" type="tel" maxlength="20" autocomplete="tel"></label>
+            <label>Data de nascimento<input name="birth_date" type="date" autocomplete="bday" min="1900-01-01"></label>
+            <label>Como costuma pagar na barbearia<select name="pref_pay">
+              <option value="">Não sei / tanto faz</option><option value="pix">Pix</option><option value="credito">Cartão de crédito</option>
+              <option value="debito">Cartão de débito</option><option value="dinheiro">Dinheiro</option></select></label>
+          </div>
+          <div><button class="btn btn-ghost btn-sm" type="submit">Salvar dados</button></div>
+        </form>
+        <form class="stack" id="password-form">
+          <label>Nova senha<input type="password" name="password" autocomplete="new-password" minlength="8" maxlength="72"></label>
+          <div><button class="btn btn-ghost btn-sm" type="submit">Trocar senha</button></div>
+        </form>
+        <hr class="u-b0 u-bt-line">
+        <p class="muted small">Excluir a conta apaga seu cadastro, histórico de horários e mensagens. Não dá para desfazer.</p>
+        <div><button class="btn btn-bad btn-sm" id="delete-account">Excluir minha conta</button></div>
+      </div>
+    </details>
+  </section>
+</main>
+
+<script src="js/config.js?v=20261106"></script>
+<script src="js/api.js?v=20261114"></script>
+<script src="js/conta.js?v=20261114"></script>
+</body>
+</html>
